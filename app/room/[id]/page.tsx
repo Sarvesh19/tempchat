@@ -3,6 +3,7 @@
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { ArrowLeft } from 'lucide-react';
 
 // Generate a random username for the session
 const generateRandomName = () => {
@@ -343,11 +344,20 @@ export default function Room() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-md flex flex-col h-[80vh]">
-        {/* Header */}
+        {/* Header with Back Button */}
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-gray-800">
-            Room {id || 'Loading...'}
-          </h1>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => router.push('/')}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              title="Back to Home"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-800">
+              Room {id || 'Loading...'}
+            </h1>
+          </div>
           <span className="text-sm text-gray-600">
             You are: {username || 'Loading...'}
           </span>
