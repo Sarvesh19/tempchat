@@ -3,7 +3,7 @@
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { ArrowLeft, Paperclip, Share2 } from 'lucide-react';
+import { ArrowLeft, Paperclip, Share2, Moon, Sun } from 'lucide-react';
 import QRCode from 'react-qr-code';
 
 // Generate a random username for the session
@@ -28,6 +28,7 @@ export default function Room() {
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState<string>('');
   const [showQRCode, setShowQRCode] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +36,6 @@ export default function Room() {
     ? `${window.location.origin}/room/${id}?key=${rawKey}`
     : '';
 
-  // Generate username only on the client side
   useEffect(() => {
     if (!username) {
       setUsername(generateRandomName());
@@ -103,7 +103,7 @@ export default function Room() {
               }
             });
           setMessages(parsedMessages);
-          scrollToBottom(); // Scroll to bottom when initial messages are loaded
+          scrollToBottom();
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : 'Unknown error';
           setError('Failed to decrypt messages: ' + errorMessage);
@@ -138,7 +138,7 @@ export default function Room() {
                   }
                 });
               setMessages(parsedMessages);
-              scrollToBottom(); // Scroll to bottom when new message received
+              scrollToBottom();
             } catch (err: unknown) {
               const errorMessage = err instanceof Error ? err.message : 'Unknown error';
               setError('Failed to decrypt real-time update: ' + errorMessage);
@@ -186,7 +186,7 @@ export default function Room() {
       if (updateError) throw new Error('Supabase update failed: ' + updateError.message);
       setNewMessage('');
       setError(null);
-      scrollToBottom(); // Scroll to bottom after sending message
+      scrollToBottom();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError('Failed to encrypt or send message: ' + errorMessage);
@@ -230,7 +230,7 @@ export default function Room() {
           .eq('id', id);
         if (updateError) throw new Error('Supabase update failed: ' + updateError.message);
         setError(null);
-        scrollToBottom(); // Scroll to bottom after file upload
+        scrollToBottom();
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -349,41 +349,56 @@ export default function Room() {
     }
   };
 
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
+  };
+
   return (
-    <div className="h-screen w-screen flex flex-col bg-gray-100">
+    <div className={`h-screen w-screen flex flex-col ${isDarkTheme ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white flex justify-between items-center">
+      <div className={`flex-shrink-0 p-4 border-b ${isDarkTheme ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex justify-between items-center`}>
         <div className="flex items-center space-x-3">
           <button
             onClick={() => router.push('/')}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
             title="Back to Home"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className={`w-6 h-6 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
-          <h1 className="text-xl font-semibold text-gray-800 truncate max-w-[50vw]">
+          <h1 className={`text-xl font-semibold truncate max-w-[40vw] ${isDarkTheme ? 'text-gray-200' : 'text-gray-800'}`}>
             Room {id || 'Loading...'}
           </h1>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="text-sm text-gray-600">
+          {/* <span className={`text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
             You are: {username || 'Loading...'}
-          </span>
+          </span> */}
           <button
             onClick={shareLink}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
             title="Share Room Link"
           >
-            <Share2 className="w-5 h-5 text-gray-600" />
+            <Share2 className={`w-7 h-7 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
           <button
             onClick={() => setShowQRCode(!showQRCode)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
             title="Show QR Code"
           >
-            <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
+            <svg className={`w-7 h-7 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`} viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 3h8v8H3zm2 2v4h4V5zm-2 8h8v8H3zm2 2v4h4v-4zm8-10h8v8h-8zm2 2v4h4V7zm4 6v2h-2v-2zm-4 2h2v2h-2zm2 2v2h-2v-2zm-2 2h2v2h-2zm4-6h2v6h-2zm2 8v-2h2v2z"/>
             </svg>
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+            title="Toggle Theme"
+          >
+            {isDarkTheme ? (
+              <Sun className="w-6 h-6 text-gray-300" />
+            ) : (
+              <Moon className="w-6 h-6 text-gray-600" />
+            )}
           </button>
         </div>
       </div>
@@ -391,8 +406,8 @@ export default function Room() {
       {/* QR Code Modal */}
       {showQRCode && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-4 rounded-lg">
-            <QRCode value={roomUrl} size={200} />
+          <div className="bg-white p-6 rounded-lg">
+            <QRCode value={roomUrl} size={250} />
             <div className="flex justify-end">
               <button
                 onClick={() => setShowQRCode(false)}
@@ -407,7 +422,7 @@ export default function Room() {
 
       {/* Error Message */}
       {error && (
-        <p className="p-4 text-sm text-red-600 bg-red-100">
+        <p className={`p-4 text-sm ${isDarkTheme ? 'text-red-400 bg-red-900/50' : 'text-red-600 bg-red-100'}`}>
           {error}
         </p>
       )}
@@ -415,7 +430,7 @@ export default function Room() {
       {/* Messages Area */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto bg-gray-50 touch-auto"
+        className={`flex-1 overflow-y-auto ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'} touch-auto`}
         style={{
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
@@ -424,7 +439,7 @@ export default function Room() {
       >
         <div className="p-4">
           {messages.length === 0 ? (
-            <p className="text-gray-500 text-center">No messages yet.</p>
+            <p className={`text-center ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet.</p>
           ) : (
             messages.map((msg, idx) => (
               <div
@@ -432,7 +447,7 @@ export default function Room() {
                 className={`mb-3 p-3 rounded-lg max-w-[80%] break-words ${
                   msg.sender === username
                     ? 'bg-teal-500 text-white ml-auto'
-                    : 'bg-teal-100 text-gray-800'
+                    : `${isDarkTheme ? 'bg-gray-700 text-gray-200' : 'bg-teal-100 text-gray-800'}`
                 }`}
               >
                 <span className="text-xs block mb-1 opacity-75">{msg.sender}</span>
@@ -445,10 +460,10 @@ export default function Room() {
       </div>
 
       {/* Input Area */}
-      <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
+      <div className={`flex-shrink-0 p-4 border-t ${isDarkTheme ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
         <div className="flex items-center space-x-2">
           <label className="cursor-pointer">
-            <Paperclip className="w-6 h-6 text-teal-700 hover:text-teal-900 transition-colors" />
+            <Paperclip className={`w-6 h-6 ${isDarkTheme ? 'text-teal-400 hover:text-teal-300' : 'text-teal-700 hover:text-teal-900'} transition-colors`} />
             <input
               type="file"
               onChange={uploadFile}
@@ -460,11 +475,11 @@ export default function Room() {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className={`flex-1 p-2 border ${isDarkTheme ? 'border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400' : 'border-gray-300 bg-white text-black placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500`}
           />
           <button
             onClick={sendMessage}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-400"
+            className={`px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-400`}
             disabled={!newMessage || !id || !key}
           >
             Send
