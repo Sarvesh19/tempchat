@@ -31,7 +31,7 @@ export default function Room() {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null); // New ref for input
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const roomUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/room/${id}?key=${rawKey}`
@@ -190,8 +190,10 @@ export default function Room() {
       setNewMessage('');
       setError(null);
       scrollToBottom();
-      // Focus the input after sending message
-      inputRef.current?.focus();
+      // Use setTimeout to ensure focus works on mobile after state updates
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError('Failed to encrypt or send message: ' + errorMessage);
@@ -483,7 +485,8 @@ export default function Room() {
               />
             </label>
             <input
-              ref={inputRef} // Added ref to input
+              ref={inputRef}
+              autoFocus // Added autoFocus to help mobile behavior
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
