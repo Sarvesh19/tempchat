@@ -31,6 +31,7 @@ export default function Room() {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null); // New ref for input
 
   const roomUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/room/${id}?key=${rawKey}`
@@ -163,7 +164,6 @@ export default function Room() {
     };
   }, [id, key, router]);
 
-  // Scroll to bottom whenever messages change (new message received)
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -190,6 +190,8 @@ export default function Room() {
       setNewMessage('');
       setError(null);
       scrollToBottom();
+      // Focus the input after sending message
+      inputRef.current?.focus();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError('Failed to encrypt or send message: ' + errorMessage);
@@ -202,29 +204,32 @@ export default function Room() {
       setError('File, ID, or key missing');
       return;
     }
-
+  
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session Data:', session, 'Session Error:', sessionError);
+  
       const arrayBuffer = await file.arrayBuffer();
       const encryptedBlob = await encryptFile(arrayBuffer, key);
       const filePath = `${id}/${Date.now()}_${file.name}.enc`;
       
-      const { data: userData, error: authError } = await supabase.auth.getUser();
-      if (authError && authError.message.includes('not authenticated')) {
-        setError('User not authenticated. Please log in to upload files.');
-        return;
-      }
-
+      console.log('Uploading photo to path:', filePath, 'File type:', file.type, 'File size:', file.size);
+  
       const { data, error: uploadError } = await supabase.storage
         .from('chat-files')
         .upload(filePath, encryptedBlob, {
           contentType: file.type,
           upsert: true,
         });
-      if (uploadError) throw new Error('Upload failed: ' + uploadError.message);
-
+      
+      if (uploadError) {
+        console.error('Upload Error Details:', uploadError);
+        throw new Error('Upload failed: ' + uploadError.message);
+      }
+  
       if (data) {
         const fileUrl = supabase.storage.from('chat-files').getPublicUrl(filePath).data.publicUrl;
-        const messageObj = { text: `File: ${fileUrl}`, sender: username };
+        const messageObj = { text: `Photo: ${fileUrl}`, sender: 'Anonymous' };
         const encryptedMessage = await encrypt(JSON.stringify(messageObj), key);
         const updatedMessages = [...(await fetchMessages()), encryptedMessage];
         const { error: updateError } = await supabase
@@ -237,7 +242,8 @@ export default function Room() {
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError('Failed to encrypt or upload file: ' + errorMessage);
+      setError('Failed to encrypt or upload photo: ' + errorMessage);
+      console.error('Full Error:', err);
     }
   }
 
@@ -477,6 +483,7 @@ export default function Room() {
               />
             </label>
             <input
+              ref={inputRef} // Added ref to input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
