@@ -103,7 +103,6 @@ export default function Room() {
               }
             });
           setMessages(parsedMessages);
-          scrollToBottom();
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : 'Unknown error';
           setError('Failed to decrypt messages: ' + errorMessage);
@@ -138,7 +137,6 @@ export default function Room() {
                   }
                 });
               setMessages(parsedMessages);
-              scrollToBottom();
             } catch (err: unknown) {
               const errorMessage = err instanceof Error ? err.message : 'Unknown error';
               setError('Failed to decrypt real-time update: ' + errorMessage);
@@ -164,6 +162,11 @@ export default function Room() {
       supabase.removeChannel(channel);
     };
   }, [id, key, router]);
+
+  // Scroll to bottom whenever messages change (new message received)
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -400,90 +403,94 @@ export default function Room() {
         </div>
       </div>
 
-      {/* Main Content with padding to account for fixed header */}
-      <div className="flex flex-col flex-1 pt-[80px] pb-[80px]">
-        {/* QR Code Modal */}
-        {showQRCode && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg">
-              <QRCode value={roomUrl} size={250} />
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setShowQRCode(false)}
-                  className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg"
-                >
-                  Close
-                </button>
+      {/* Main Content Wrapper for Desktop Card View */}
+      <div className="flex justify-center flex-1 pt-[80px] pb-[80px]">
+        <div className={`flex flex-col w-full md:max-w-3xl md:shadow-lg md:rounded-lg ${isDarkTheme ? 'md:bg-gray-800' : 'md:bg-white'}`}>
+          {/* QR Code Modal */}
+          {showQRCode && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-white p-6 rounded-lg">
+                <QRCode value={roomUrl} size={250} />
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowQRCode(false)}
+                    className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Error Message */}
-        {error && (
-          <p className={`p-4 text-sm ${isDarkTheme ? 'text-red-400 bg-red-900/50' : 'text-red-600 bg-red-100'}`}>
-            {error}
-          </p>
-        )}
+          {/* Error Message */}
+          {error && (
+            <p className={`p-4 text-sm ${isDarkTheme ? 'text-red-400 bg-red-900/50' : 'text-red-600 bg-red-100'}`}>
+              {error}
+            </p>
+          )}
 
-        {/* Messages Area */}
-        <div 
-          ref={messagesContainerRef}
-          className={`flex-1 overflow-y-auto ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'} touch-auto`}
-          style={{
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            scrollBehavior: 'smooth'
-          }}
-        >
-          <div className="p-4">
-            {messages.length === 0 ? (
-              <p className={`text-center ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet.</p>
-            ) : (
-              messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`mb-3 p-3 rounded-lg max-w-[80%] break-words ${
-                    msg.sender === username
-                      ? 'bg-teal-500 text-white ml-auto'
-                      : `${isDarkTheme ? 'bg-gray-700 text-gray-200' : 'bg-teal-100 text-gray-800'}`
-                  }`}
-                >
-                  <span className="text-xs block mb-1 opacity-75">{msg.sender}</span>
-                  {msg.text}
-                </div>
-              ))
-            )}
-            <div ref={messagesEndRef} />
+          {/* Messages Area */}
+          <div 
+            ref={messagesContainerRef}
+            className={`flex-1 overflow-y-auto ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'} touch-auto pt-16`}
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              scrollBehavior: 'smooth'
+            }}
+          >
+            <div className="p-4">
+              {messages.length === 0 ? (
+                <p className={`text-center ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet.</p>
+              ) : (
+                messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`mb-3 p-3 rounded-lg max-w-[80%] break-words ${
+                      msg.sender === username
+                        ? 'bg-teal-500 text-white ml-auto'
+                        : `${isDarkTheme ? 'bg-gray-700 text-gray-200' : 'bg-teal-100 text-gray-800'}`
+                    }`}
+                  >
+                    <span className="text-xs block mb-1 opacity-75">{msg.sender}</span>
+                    {msg.text}
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Fixed Footer */}
       <div className={`fixed bottom-0 left-0 right-0 p-4 border-t ${isDarkTheme ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} z-10`}>
-        <div className="flex items-center space-x-2">
-          <label className="cursor-pointer">
-            <Paperclip className={`w-6 h-6 ${isDarkTheme ? 'text-teal-400 hover:text-teal-300' : 'text-teal-700 hover:text-teal-900'} transition-colors`} />
+        <div className="flex justify-center">
+          <div className="flex items-center space-x-2 w-full md:max-w-3xl">
+            <label className="cursor-pointer">
+              <Paperclip className={`w-6 h-6 ${isDarkTheme ? 'text-teal-400 hover:text-teal-300' : 'text-teal-700 hover:text-teal-900'} transition-colors`} />
+              <input
+                type="file"
+                onChange={uploadFile}
+                className="hidden"
+              />
+            </label>
             <input
-              type="file"
-              onChange={uploadFile}
-              className="hidden"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message..."
+              className={`flex-1 p-2 border ${isDarkTheme ? 'border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400' : 'border-gray-300 bg-white text-black placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500`}
             />
-          </label>
-          <input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            className={`flex-1 p-2 border ${isDarkTheme ? 'border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400' : 'border-gray-300 bg-white text-black placeholder-gray-500'} rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500`}
-          />
-          <button
-            onClick={sendMessage}
-            className={`px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-400`}
-            disabled={!newMessage || !id || !key}
-          >
-            Send
-          </button>
+            <button
+              onClick={sendMessage}
+              className={`px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-400`}
+              disabled={!newMessage || !id || !key}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
