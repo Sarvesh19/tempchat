@@ -355,8 +355,8 @@ export default function Room() {
 
   return (
     <div className={`h-screen w-screen flex flex-col ${isDarkTheme ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
-      {/* Header */}
-      <div className={`flex-shrink-0 p-4 border-b ${isDarkTheme ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex justify-between items-center`}>
+      {/* Fixed Header */}
+      <div className={`fixed top-0 left-0 right-0 z-10 p-4 border-b ${isDarkTheme ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex justify-between items-center`}>
         <div className="flex items-center space-x-3">
           <button
             onClick={() => router.push('/')}
@@ -370,9 +370,6 @@ export default function Room() {
           </h1>
         </div>
         <div className="flex items-center space-x-3">
-          {/* <span className={`text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-            You are: {username || 'Loading...'}
-          </span> */}
           <button
             onClick={shareLink}
             className="p-2 hover:bg-gray-700 rounded-full transition-colors"
@@ -403,64 +400,67 @@ export default function Room() {
         </div>
       </div>
 
-      {/* QR Code Modal */}
-      {showQRCode && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg">
-            <QRCode value={roomUrl} size={250} />
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowQRCode(false)}
-                className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg"
-              >
-                Close
-              </button>
+      {/* Main Content with padding to account for fixed header */}
+      <div className="flex flex-col flex-1 pt-[80px] pb-[80px]">
+        {/* QR Code Modal */}
+        {showQRCode && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded-lg">
+              <QRCode value={roomUrl} size={250} />
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowQRCode(false)}
+                  className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Error Message */}
-      {error && (
-        <p className={`p-4 text-sm ${isDarkTheme ? 'text-red-400 bg-red-900/50' : 'text-red-600 bg-red-100'}`}>
-          {error}
-        </p>
-      )}
+        {/* Error Message */}
+        {error && (
+          <p className={`p-4 text-sm ${isDarkTheme ? 'text-red-400 bg-red-900/50' : 'text-red-600 bg-red-100'}`}>
+            {error}
+          </p>
+        )}
 
-      {/* Messages Area */}
-      <div 
-        ref={messagesContainerRef}
-        className={`flex-1 overflow-y-auto ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'} touch-auto`}
-        style={{
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-          scrollBehavior: 'smooth'
-        }}
-      >
-        <div className="p-4">
-          {messages.length === 0 ? (
-            <p className={`text-center ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet.</p>
-          ) : (
-            messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`mb-3 p-3 rounded-lg max-w-[80%] break-words ${
-                  msg.sender === username
-                    ? 'bg-teal-500 text-white ml-auto'
-                    : `${isDarkTheme ? 'bg-gray-700 text-gray-200' : 'bg-teal-100 text-gray-800'}`
-                }`}
-              >
-                <span className="text-xs block mb-1 opacity-75">{msg.sender}</span>
-                {msg.text}
-              </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
+        {/* Messages Area */}
+        <div 
+          ref={messagesContainerRef}
+          className={`flex-1 overflow-y-auto ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'} touch-auto`}
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            scrollBehavior: 'smooth'
+          }}
+        >
+          <div className="p-4">
+            {messages.length === 0 ? (
+              <p className={`text-center ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet.</p>
+            ) : (
+              messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`mb-3 p-3 rounded-lg max-w-[80%] break-words ${
+                    msg.sender === username
+                      ? 'bg-teal-500 text-white ml-auto'
+                      : `${isDarkTheme ? 'bg-gray-700 text-gray-200' : 'bg-teal-100 text-gray-800'}`
+                  }`}
+                >
+                  <span className="text-xs block mb-1 opacity-75">{msg.sender}</span>
+                  {msg.text}
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className={`flex-shrink-0 p-4 border-t ${isDarkTheme ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+      {/* Fixed Footer */}
+      <div className={`fixed bottom-0 left-0 right-0 p-4 border-t ${isDarkTheme ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} z-10`}>
         <div className="flex items-center space-x-2">
           <label className="cursor-pointer">
             <Paperclip className={`w-6 h-6 ${isDarkTheme ? 'text-teal-400 hover:text-teal-300' : 'text-teal-700 hover:text-teal-900'} transition-colors`} />
